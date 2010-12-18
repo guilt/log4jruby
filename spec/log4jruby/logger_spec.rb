@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../spec_helper'
+require 'spec_helper'
 
 require 'log4jruby'
 
@@ -61,6 +61,10 @@ module Log4jruby
       
       it "should respond to :level" do
         subject.respond_to?(:level).should == true
+      end
+      
+      it "should respond to :flush" do
+        subject.respond_to?(:flush).should == true
       end
     end
     
