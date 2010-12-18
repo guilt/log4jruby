@@ -2,8 +2,6 @@ module Log4jruby
   class Log4jArgs
     class << self
       def convert(object = nil, exception = nil)
-
-
         msg = ''
 
         if exception
@@ -14,6 +12,7 @@ module Log4jruby
 
         if exception.is_a?(NativeException)
           append_ruby_error(msg, exception)
+          msg << "\nNativeException:"
           exception = exception.cause
         elsif exception.is_a?(::Exception)
           append_ruby_error(msg, exception)
@@ -24,7 +23,6 @@ module Log4jruby
         end
 
         [msg, exception]
-
       end
 
       private
@@ -34,11 +32,8 @@ module Log4jruby
       end
 
       def append(msg, s)
-        if msg.empty?
-          msg << s
-        else
-          msg << "\n#{s}"
-        end
+        msg << "\n#{s}"
+        msg.lstrip!
       end
     end
   end
