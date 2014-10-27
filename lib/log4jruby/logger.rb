@@ -3,6 +3,12 @@ require 'log4jruby/log4j_args'
 # Slightly Modified JRuby Logger
 require 'log4jruby/jruby/logger'
 
+begin
+  $LOGPREFIX = LOGPREFIX
+rescue
+  $LOGPREFIX = ENV['LOGPREFIX'] || 'jruby'
+end
+
 module Log4jruby
   
   # Author::    Lenny Marks
@@ -12,6 +18,7 @@ module Log4jruby
   # * Ruby and Java exceptions are logged with backtraces.
   # * fileName, lineNumber, methodName available to appender layouts via MDC variables(e.g. %X{lineNumber}) 
   class Logger
+
     BLANK_CALLER = ['', '', ''] #:nodoc:
 
     LOG4J_LEVELS = {
@@ -45,13 +52,13 @@ module Log4jruby
 
     class Formatter
       def initialize
-        raise 'Unimplemented Functionality.'
+        raise Error, 'Unimplemented Functionality.'
       end
     end
 
     class LogDevice
       def initialize
-        raise 'Unimplemented Functionality.'
+        raise Error, 'Unimplemented Functionality.'
       end
     end
 
@@ -66,7 +73,7 @@ module Log4jruby
       
       # get Logger for name
       def[](name)
-        name = name.nil? ? 'jruby' : "jruby.#{name.gsub('::', '.')}"
+        name = name.nil? ? $LOGPREFIX : "#{$LOGPREFIX}.#{name.gsub('::', '.')}"
        
         log4j = Java::org.apache.log4j.Logger.getLogger(name)
         log4jruby = logger_mapping[log4j]
@@ -87,7 +94,7 @@ module Log4jruby
       
       # Return root Logger(i.e. jruby)
       def root
-        log4j = Java::org.apache.log4j.Logger.getLogger('jruby')
+        log4j = Java::org.apache.log4j.Logger.getLogger($LOGPREFIX)
         
         log4jruby = logger_mapping[log4j]
         unless log4jruby
@@ -231,18 +238,18 @@ module Log4jruby
         @logger = logger
         Logger.logger_mapping[@logger] = self
       else
-        unless logger
-	  if STDOUT === logger
-            name = 'STDOUT'
-          end
-	  if STDERR === logger
-            name = 'STDERR'
-          end
-	  name = logger.to_s unless name
+        values.each do |value|
+           raise ShiftingError, "Ignoring Arguments: #{values.inspect}\n"
+        end
+        if logger
+	  name = 'STDOUT' if logger === STDOUT
+	  name = 'STDERR' if logger === STDERR
+	  name = logger.path if logger.respond_to?(:path)
+	  name ||= logger.to_s
         else
           name = nil
         end
-        name = name.nil? ? 'jruby' : "jruby.#{name.gsub('::', '.')}"
+        name = name.nil? ? $LOGPREFIX : "#{$LOGPREFIX}.#{name.gsub('::', '.')}"
         @logger = Java::org.apache.log4j.Logger.getLogger(name)
         Logger.logger_mapping[@logger] = self
       end
